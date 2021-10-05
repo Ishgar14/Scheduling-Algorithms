@@ -1,6 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 
+// #define DEBUG
+
 typedef struct {
     int id, arrival, burst;
 } process;
@@ -56,6 +58,7 @@ void schedule(process *pros, int len){
 }
 
 void main() {
+    #ifdef DEBUG
     process processes[] = {
         {1, 7, 15},
         {2, 0, 5},
@@ -63,8 +66,26 @@ void main() {
         {4, 5, 1},
         {5, 3, 2},
     };
-
     schedule(processes, sizeof(processes) / sizeof(process));
+
+    #else
+    int len = 0;
+    printf("Enter number of processes: ");
+    scanf("%d", &len);
+    process *processes = malloc(sizeof(process) * len);
+
+    for (int i = 0; i < len; i++) {
+        processes[i].id = i + 1;
+        printf("Enter arrival time of P%d: ", i + 1);
+        scanf("%d", &processes[i].arrival);
+        printf("Enter burst time of P%d: ", i + 1);
+        scanf("%d", &processes[i].burst);
+        printf("\n");
+    }
+    
+    schedule(processes, len);
+    
+    #endif
 }
 
 
