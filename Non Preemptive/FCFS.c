@@ -1,12 +1,20 @@
 #include <stdio.h>
 #include <stdlib.h>
+#include "../gantt.h"
 
-// #define DEBUG
+#define DEBUG
 
 typedef struct {
     int id, arrival, burst;
 } process;
 
+typedef struct {
+    process p[20];
+    int finish_time[20];
+    int waiting_time[20];
+    int turn_around_time[20];
+    int len;
+} stats;
 
 typedef struct {
     process *data;
@@ -16,24 +24,38 @@ typedef struct {
 queue* queue_init(int size);
 void enqueue(queue*, process*);
 process* dequeue(queue *q);
+
+void print_stats(stats*);
 int process_arrival(const void*, const void*);
+void stat_sort(stats*);
 
 
 void schedule(process *pros, int len){
     int tick = 0;
+    gantt *chart = malloc(sizeof(gantt));
+    stats statistics = {0};
     qsort(pros, len, sizeof(process), process_arrival);
     queue *ready = queue_init(len);
 
     for (int i = 0; i < len; i++)
         enqueue(ready, pros + i);
 
-        
+
     while (ready->len > 0) {
         process *p = dequeue(ready);
 
         if (p->arrival <= tick){
             printf("Time %2d  Executing process %d\n", tick, p->id);
             tick += p->burst;
+            int len = statistics.len;
+
+            statistics.p[len].id = p->id;
+            statistics.p[len].arrival = p->arrival;
+            statistics.p[len].burst = p->burst;
+            statistics.finish_time[len] = tick;
+            statistics.turn_around_time[len] = statistics.finish_time[len] - p->arrival;
+            statistics.waiting_time[len] = statistics.finish_time[len] - p->burst;
+            statistics.len++;
         }
         else {
             /*
@@ -54,7 +76,25 @@ void schedule(process *pros, int len){
         free(p);
     }
 
+    stat_sort(&statistics);
+    print_stats(&statistics);
     free(ready);
+}
+
+void print_stats(stats *statistics) {
+    printf("ID AT  BT  FT  TT  WT\n");
+    for (int i = 0; i < statistics->len; i++)
+    {
+        printf("%2d %2d  %2d  %2d  %2d  %2d\n", 
+            statistics->p[i].id, 
+            statistics->p[i].arrival, 
+            statistics->p[i].burst, 
+            statistics->finish_time[i], 
+            statistics->turn_around_time[i],
+            statistics->waiting_time[i]
+        );
+    }
+    
 }
 
 void main() {
@@ -121,4 +161,27 @@ process* dequeue(queue *q){
 
 int process_arrival(const void *p1, const void *p2) {
     return ((process*) p1)->arrival > ((process*) p2)->arrival;
+}
+
+void swap(int *a, int *b){
+    int temp = *a;
+    *a = *b;
+    *b = temp;
+}
+
+
+void stat_sort(stats *statistic){
+    for (int i = 0; i < statistic->len; i++) {
+        int j = i;
+        while (j > 0 && statistic->p[j].id < statistic->p[j-1].id){
+            swap(&statistic->p[j].id, &statistic->p[j-1].id);
+            swap(&statistic->p[j].arrival, &statistic->p[j-1].arrival);
+            swap(&statistic->p[j].burst, &statistic->p[j-1].burst);
+
+            swap(&statistic->finish_time[j], &statistic->finish_time[j-1]);
+            swap(&statistic->turn_around_time[j], &statistic->turn_around_time[j-1]);
+            swap(&statistic->waiting_time[j], &statistic->waiting_time[j-1]);
+            j--;
+        }
+    }
 }
