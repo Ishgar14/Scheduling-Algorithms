@@ -19,6 +19,7 @@ typedef struct {
 } table;
 table stats = {0};
 
+int cmp_arrival(const void*, const void*);
 char* concat(char*, char*);
 process* next(process[], int*, int);
 
@@ -26,11 +27,12 @@ void schedule(process *pros, int len){
     int time = 0;
     char *bar = '\0';
     char *timestamps = '\0';
+    qsort(pros, len, sizeof(process), cmp_arrival);
     char temp[10];
 
     while(len > 0){
         process *p = next(pros, &len, time);
-        
+
         if(p == NULL) {
             bar = concat(bar, "|");
             sprintf(temp, "%d", time);
@@ -139,6 +141,10 @@ void main() {
 
     schedule(pros, len);
     print_table(len);
+}
+
+int cmp_arrival(const void* p1, const void* p2){
+    return ((process*)p1)->arrival > ((process*)p2)->arrival;
 }
 
 void pro_copy(process *p1, process *p2) {
