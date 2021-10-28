@@ -1,187 +1,177 @@
 #include <stdio.h>
+#include <string.h>
 #include <stdlib.h>
-#include "../gantt.h"
 
 #define DEBUG
+#define SIZE 10
 
-typedef struct {
-    int id, arrival, burst;
+typedef struct process {
+    int ID, arrival, burst;
 } process;
 
 typedef struct {
-    process p[20];
-    int finish_time[20];
-    int waiting_time[20];
-    int turn_around_time[20];
-    int len;
-} stats;
+    int ID[SIZE], 
+        arrival[SIZE], 
+        burst[SIZE],
+        finish[SIZE],
+        turn_around[SIZE],
+        wait[SIZE];
+} table;
+table stats = {0};
 
-typedef struct {
-    process *data;
-    int len;
-} queue;
-
-queue* queue_init(int size);
-void enqueue(queue*, process*);
-process* dequeue(queue *q);
-
-void print_stats(stats*);
-int process_arrival(const void*, const void*);
-void stat_sort(stats*);
-
+char* concat(char*, char*);
+process* next(process[], int*, int);
 
 void schedule(process *pros, int len){
-    int tick = 0;
-    gantt *chart = malloc(sizeof(gantt));
-    stats statistics = {0};
-    qsort(pros, len, sizeof(process), process_arrival);
-    queue *ready = queue_init(len);
+    int time = 0;
+    char *bar = '\0';
+    char *timestamps = '\0';
+    char temp[10];
 
-    for (int i = 0; i < len; i++)
-        enqueue(ready, pros + i);
-
-
-    while (ready->len > 0) {
-        process *p = dequeue(ready);
-
-        if (p->arrival <= tick){
-            printf("Time %2d  Executing process %d\n", tick, p->id);
-            tick += p->burst;
-            int len = statistics.len;
-
-            statistics.p[len].id = p->id;
-            statistics.p[len].arrival = p->arrival;
-            statistics.p[len].burst = p->burst;
-            statistics.finish_time[len] = tick;
-            statistics.turn_around_time[len] = statistics.finish_time[len] - p->arrival;
-            statistics.waiting_time[len] = statistics.finish_time[len] - p->burst;
-            statistics.len++;
+    while(len > 0){
+        process *p = next(pros, &len, time);
+        if(p == NULL) {
+            printf("time %d: IDLE");
+            time += 1;
         }
-        else {
-            /*
-            int future = 0;
-            for(int i = 0; i < ready->len; i++)
-                if(ready->data[i].arrival <= tick){
-                    future = 1;
-                    break;
-                }
 
-            if(!future) {}
-            */
-            printf("Time %2d  IDLE\n", tick);
-            tick += 1;
-            enqueue(ready, p);
+        // printf("time %2d: %d %d %d\n", time, p->ID, p->arrival, p->burst);
+        bar = concat(bar, "|");
+        sprintf(temp, "%-3d", time);
+        timestamps = concat(timestamps, temp);
+
+        for(int i = 0; i < p->burst; i++) {
+            bar = concat(bar, " ");
+            timestamps = concat(timestamps, " ");
         }
+
+        sprintf(temp, "P%d", p->ID);
+        bar = concat(bar, temp);
+        
+        for(int i = 0; i < p->burst; i++) {
+            bar = concat(bar, " ");
+            timestamps = concat(timestamps, " ");
+        }
+
+        time += p->burst;
+
+        int pid = p->ID - 1;
+        stats.ID[pid] = p->ID;
+        stats.arrival[pid] = p->arrival;
+        stats.burst[pid] = p->burst;
+        stats.finish[pid] = time;
+        stats.turn_around[pid] = stats.finish[pid] - stats.arrival[pid];
+        stats.wait[pid] = stats.turn_around[pid] - stats.burst[pid];
 
         free(p);
     }
 
-    stat_sort(&statistics);
-    print_stats(&statistics);
-    free(ready);
+    // decoration
+    for (int i = 0; bar[i] != '\0'; i++) 
+        printf("-");
+    printf("\n");
+
+    // Printing the process bars
+    printf("%s|\n", bar);
+
+    // decoration
+    for (int i = 0; bar[i] != '\0'; i++)
+        printf("-");
+    printf("\n");
+
+    // printing the time stamps of process
+    sprintf(temp, "%d", time);
+    timestamps = concat(timestamps, temp);
+    printf("%s", timestamps);
 }
 
-void print_stats(stats *statistics) {
-    printf("ID AT  BT  FT  TT  WT\n");
-    for (int i = 0; i < statistics->len; i++)
-    {
-        printf("%2d %2d  %2d  %2d  %2d  %2d\n", 
-            statistics->p[i].id, 
-            statistics->p[i].arrival, 
-            statistics->p[i].burst, 
-            statistics->finish_time[i], 
-            statistics->turn_around_time[i],
-            statistics->waiting_time[i]
-        );
+void print_table(int len){
+    printf("\nID  AT BT FT  TT  WT\n");
+    for (int i = 0; i < len; i++) {
+        printf("%-2d  %-2d %-2d %-3d %-3d %-3d\n",
+            stats.ID[i], 
+            stats.arrival[i], 
+            stats.burst[i], 
+            stats.finish[i], 
+            stats.turn_around[i], 
+            stats.wait[i]);
     }
     
 }
 
 void main() {
     #ifdef DEBUG
-    process processes[] = {
-        {1, 7, 15},
-        {2, 0, 5},
+    process pros[] = {
+        {1, 7, 9},
+        {2, 0, 3},
         {3, 1, 7},
         {4, 5, 1},
-        {5, 3, 2},
+        {5, 3, 3},
     };
-    schedule(processes, sizeof(processes) / sizeof(process));
+    int len = sizeof(pros) / sizeof(process);
 
     #else
     int len = 0;
-    printf("Enter number of processes: ");
+    printf("Enter number of pros: ");
     scanf("%d", &len);
-    process *processes = malloc(sizeof(process) * len);
+    process *pros = malloc(sizeof(process) * len);
 
     for (int i = 0; i < len; i++) {
-        processes[i].id = i + 1;
+        pros[i].id = i + 1;
         printf("Enter arrival time of P%d: ", i + 1);
-        scanf("%d", &processes[i].arrival);
+        scanf("%d", &pros[i].arrival);
         printf("Enter burst time of P%d: ", i + 1);
-        scanf("%d", &processes[i].burst);
+        scanf("%d", &pros[i].burst);
         printf("\n");
     }
-    
-    schedule(processes, len);
-    
     #endif
+
+    schedule(pros, len);
+    print_table(len);
 }
 
-
-queue* queue_init(int size) {
-    queue *q = malloc(sizeof(queue));
-    q->data = calloc(size, sizeof(process));
-    q->len = 0;
-    return q;
+void pro_copy(process *p1, process *p2) {
+    p1->arrival = p2->arrival;
+    p1->burst = p2->burst;
+    p1->ID = p2->ID;
 }
 
-void enqueue(queue *q, process* p) {
-    q->data[q->len].id = p->id;
-    q->data[q->len].arrival = p->arrival;
-    q->data[q->len].burst = p->burst;
-    q->len++;
-}
+// This function returns the next available process 
+process* next(process* pros, int *len, int time) {
+    for (int i = 0; i < *len; i++) {
+        if(pros[i].arrival <= time){
+            process* ret = malloc(sizeof(process));
+            pro_copy(ret, pros + i);
 
-process* dequeue(queue *q){
-    process *p = malloc(sizeof(process));
-    p->id = q->data[0].id;
-    p->arrival = q->data[0].arrival;
-    p->burst = q->data[0].burst;
+            while(i < *len - 1){
+                pro_copy(pros + i, pros + i + 1);
+                i++;
+            }
 
-    for (int i = 1; i < q->len; i++) {
-        q->data[i - 1].id = q->data[i].id;
-        q->data[i - 1].arrival = q->data[i].arrival;
-        q->data[i - 1].burst = q->data[i].burst;
-    }
-    q->len--;
-    
-    return p;
-}
-
-int process_arrival(const void *p1, const void *p2) {
-    return ((process*) p1)->arrival > ((process*) p2)->arrival;
-}
-
-void swap(int *a, int *b){
-    int temp = *a;
-    *a = *b;
-    *b = temp;
-}
-
-
-void stat_sort(stats *statistic){
-    for (int i = 0; i < statistic->len; i++) {
-        int j = i;
-        while (j > 0 && statistic->p[j].id < statistic->p[j-1].id){
-            swap(&statistic->p[j].id, &statistic->p[j-1].id);
-            swap(&statistic->p[j].arrival, &statistic->p[j-1].arrival);
-            swap(&statistic->p[j].burst, &statistic->p[j-1].burst);
-
-            swap(&statistic->finish_time[j], &statistic->finish_time[j-1]);
-            swap(&statistic->turn_around_time[j], &statistic->turn_around_time[j-1]);
-            swap(&statistic->waiting_time[j], &statistic->waiting_time[j-1]);
-            j--;
+            *len = *len - 1;
+            return ret;
         }
     }
+
+    return NULL;
+}
+
+char* concat(char *str1, char *str2) {
+    int len = 0;
+    int len1 = (str1 == 0 || *str1 == '\0') ? 0 : strlen(str1);
+    int len2 = strlen(str2);
+    char *result = malloc(len1 + len2 + 1);
+
+    for (int i = 0; i < len1; i++)
+        result[len++] = str1[i];
+    for (int i = 0; i < len2; i++){
+        result[len + i] = str2[i];
+    }
+    len += len2;
+
+    result[len1 + len2] = '\0';
+    free(str1);
+    // free(str2);
+
+    return result;
 }
