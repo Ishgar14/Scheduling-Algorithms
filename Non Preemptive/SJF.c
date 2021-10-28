@@ -142,7 +142,7 @@ void main() {
     }
     #endif
 
-    printf("========== Shorted Job First ==========\n");
+    printf("========== Shorted Job First [Non Preemptive] ==========\n");
     schedule(pros, len);
     print_table(len);
 }

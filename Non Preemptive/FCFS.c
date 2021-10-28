@@ -160,18 +160,19 @@ void pro_copy(process *p1, process *p2) {
 // This function returns the next available process 
 process* next(process* pros, int *len, int time) {
     for (int i = 0; i < *len; i++) {
-        if(pros[i].arrival <= time){
-            process* ret = malloc(sizeof(process));
-            pro_copy(ret, pros + i);
+        if(pros[i].arrival > time)
+            break;
+        
+        process* ret = malloc(sizeof(process));
+        pro_copy(ret, pros + i);
 
-            while(i < *len - 1){
-                pro_copy(pros + i, pros + i + 1);
-                i++;
-            }
-
-            *len = *len - 1;
-            return ret;
+        while(i < *len - 1){
+            pro_copy(pros + i, pros + i + 1);
+            i++;
         }
+
+        *len = *len - 1;
+        return ret;
     }
 
     return NULL;
