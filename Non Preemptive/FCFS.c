@@ -30,9 +30,17 @@ void schedule(process *pros, int len){
 
     while(len > 0){
         process *p = next(pros, &len, time);
+        
         if(p == NULL) {
-            printf("time %d: IDLE");
-            time += 1;
+            bar = concat(bar, "|");
+            sprintf(temp, "%d", time);
+            timestamps = concat(timestamps, temp);
+
+            while((p = next(pros, &len, time)) == NULL){
+                bar = concat(bar, "x");
+                timestamps = concat(timestamps, " ");
+                time += 1;
+            }
         }
 
         bar = concat(bar, "|");
