@@ -120,6 +120,9 @@ void main() {
         {3, 1, 7},
         {4, 5, 1},
         {5, 3, 3},
+
+        // {1, 10, 2},
+        // {2, 15, 3},
     };
     int len = sizeof(pros) / sizeof(process);
 
@@ -139,6 +142,7 @@ void main() {
     }
     #endif
 
+    printf("========== First Come First Serve ==========\n");
     schedule(pros, len);
     print_table(len);
 }
