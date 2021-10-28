@@ -35,7 +35,6 @@ void schedule(process *pros, int len){
             time += 1;
         }
 
-        // printf("time %2d: %d %d %d\n", time, p->ID, p->arrival, p->burst);
         bar = concat(bar, "|");
         sprintf(temp, "%-3d", time);
         timestamps = concat(timestamps, temp);
@@ -65,6 +64,9 @@ void schedule(process *pros, int len){
 
         free(p);
     }
+    
+    printf("Gantt Chart\n");
+    bar = concat(bar, "|");
 
     // decoration
     for (int i = 0; bar[i] != '\0'; i++) 
@@ -72,7 +74,7 @@ void schedule(process *pros, int len){
     printf("\n");
 
     // Printing the process bars
-    printf("%s|\n", bar);
+    printf("%s\n", bar);
 
     // decoration
     for (int i = 0; bar[i] != '\0'; i++)
@@ -86,6 +88,7 @@ void schedule(process *pros, int len){
 }
 
 void print_table(int len){
+    printf("\n\n==== Data Chart ====");
     printf("\nID  AT BT FT  TT  WT\n");
     for (int i = 0; i < len; i++) {
         printf("%-2d  %-2d %-2d %-3d %-3d %-3d\n",
