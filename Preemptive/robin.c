@@ -72,6 +72,8 @@ void schedule(process* pros, int len){
                 time += 1;
                 prepare_ready(pros, &len, time);
             }
+            
+            continue;
         }
 
         if (previous_process == p->ID){
