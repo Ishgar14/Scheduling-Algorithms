@@ -141,6 +141,8 @@ void main() {
         scanf("%d", &pros[i].arrival);
         printf("Enter burst time of P%d: ", i + 1);
         scanf("%d", &pros[i].burst);
+        printf("Enter priority of P%d: ", i + 1);
+        scanf("%d", &pros[i].priority);
         printf("\n");
     }
     #endif
