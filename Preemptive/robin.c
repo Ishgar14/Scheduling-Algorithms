@@ -195,8 +195,13 @@ void pro_copy(process *p1, process *p2) {
 }
 
 void kill(process *arr, int *len, int index_to_kill){
-    for (int i = index_to_kill; i < *len - 1; i++)
+    int i;
+    for (i = index_to_kill; i < *len - 1; i++)
         pro_copy(arr + i, arr + i + 1);
+    if(i == *len - 1){
+        process empty = {0, 0, 0};
+        pro_copy(arr + i, &empty);
+    }
     *len = *len - 1;
 }
 
