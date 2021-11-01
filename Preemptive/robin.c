@@ -116,7 +116,10 @@ void schedule(process* pros, int len){
         previous_process = p->ID;
         i++;
         if(i >= ready_len){
-            i %= ready_len;
+            if(ready_len == 0)
+                i = 0;
+            else 
+                i %= ready_len;
         }
     }
     
