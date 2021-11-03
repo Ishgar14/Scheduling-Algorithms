@@ -75,7 +75,7 @@ void schedule(process *pros, int len){
 
         time += limit;
         
-        if(p->burst <= QUANTA) {
+        if(p->burst <= 0) {
             int pid = p->ID - 1;
             stats.finish[pid] = time;
             stats.turn_around[pid] = stats.finish[pid] - stats.arrival[pid];
