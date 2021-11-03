@@ -55,6 +55,13 @@ void schedule(process* pros, int len){
     while(1) {
         prepare_ready(pros, &len, time);
 
+        if(i >= ready_len){
+            if(ready_len == 0)
+                i = 0;
+            else 
+                i %= ready_len;
+        }
+
         p = (ready_len > 0) ? &ready[i] : NULL;
 
         if(p == NULL) {
@@ -114,13 +121,7 @@ void schedule(process* pros, int len){
         }
 
         previous_process = p->ID;
-        i++;
-        if(i >= ready_len){
-            if(ready_len == 0)
-                i = 0;
-            else 
-                i %= ready_len;
-        }
+        i++;        
     }
     
     printf("Gantt Chart\n");
