@@ -182,10 +182,9 @@ void main() {
     print_table(len);
 }
 
-int cmp_arrival(const void* pro1, const void* pro2){
-    process *p1 = pro1;
-    process *p2 = pro2;
-    return p1->arrival > p2->arrival || p1->ID > p2->ID;
+int cmp_arrival(const void* p1, const void* p2){
+    return ((process*)p1)->arrival > ((process*)p2)->arrival || 
+            ((process*)p1)->ID > ((process*)p2)->ID;
 }
 
 void pro_copy(process *p1, process *p2) {
