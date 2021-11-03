@@ -207,12 +207,13 @@ void kill(process *arr, int *len, int index_to_kill){
 
 void prepare_ready(process *pros, int *len, int time){
     // Iterate over processes to check if given process has arrived
-    for (int i = 0; i < *len; i++) {
-        if(pros[i].arrival > time)
+    while(1)
+    {
+        if(*len == 0 || pros[0].arrival > time)
             break;
 
-        pro_copy(ready + ready_len, pros + i);
-        kill(pros, len, i);
+        pro_copy(ready + ready_len, pros);
+        kill(pros, len, 0);
         ready_len++;
     }
     
