@@ -4,7 +4,11 @@
 
 #define DEBUG
 #define SIZE 10
+#ifdef DEBUG
 #define QUANTA 1
+#else
+int QUANTA;
+#endif
 
 typedef struct process {
     int ID, arrival, burst;
@@ -160,6 +164,8 @@ void main() {
     int len = 0;
     printf("Enter number of pros: ");
     scanf("%d", &len);
+    printf("\nEnter Quanta: ");
+    scanf("%d", &QUANTA);
     printf("\n");
     process *pros = malloc(sizeof(process) * len);
 
