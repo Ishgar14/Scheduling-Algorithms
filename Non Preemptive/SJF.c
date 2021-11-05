@@ -133,7 +133,7 @@ void main() {
     process *pros = malloc(sizeof(process) * len);
 
     for (int i = 0; i < len; i++) {
-        pros[i].id = i + 1;
+        pros[i].ID = i + 1;
         printf("Enter arrival time of P%d: ", i + 1);
         scanf("%d", &pros[i].arrival);
         printf("Enter burst time of P%d: ", i + 1);
