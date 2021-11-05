@@ -78,6 +78,7 @@ void schedule(process *pros, int len){
         }
 
         time += limit;
+        p->burst -= QUANTA;
         
         if(p->burst <= 0) {
             int pid = p->ID - 1;
