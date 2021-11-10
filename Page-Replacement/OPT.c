@@ -64,7 +64,6 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
     
 
     for(int i = PAGE_FRAMES; sequence[i]; i++) {
-        counter %= PAGE_FRAMES;
         int gestation_period = 0, *target = 0;
 
         if(i > 0)
