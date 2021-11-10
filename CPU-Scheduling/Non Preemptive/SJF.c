@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DEBUG
+// #define DEBUG
 #define SIZE 10
 
 typedef struct process {
@@ -142,7 +142,7 @@ void main() {
     }
     #endif
 
-    printf("========== First Come First Serve ==========\n");
+    printf("========== Shorted Job First [Non Preemptive] ==========\n");
     schedule(pros, len);
     print_table(len);
 }
@@ -159,23 +159,35 @@ void pro_copy(process *p1, process *p2) {
 
 // This function returns the next available process 
 process* next(process* pros, int *len, int time) {
+    process temp;
+    temp.burst = INT_MAX;
+    int index = -1;
+    process *ret = NULL;
+
     for (int i = 0; i < *len; i++) {
         if(pros[i].arrival > time)
             break;
-        
-        process* ret = malloc(sizeof(process));
-        pro_copy(ret, pros + i);
 
-        while(i < *len - 1){
-            pro_copy(pros + i, pros + i + 1);
-            i++;
+        if(pros[i].burst < temp.burst){
+            pro_copy(&temp, pros + i);
+            index = i;
         }
-
-        *len = *len - 1;
-        return ret;
     }
 
-    return NULL;
+    // No process could be found within given time
+    if(index == -1)
+        return NULL;
+    
+    ret = malloc(sizeof(process));
+    pro_copy(ret, pros + index);
+
+    while(index < *len - 1){
+        pro_copy(pros + index, pros + index + 1);
+        index++;
+    }
+
+    *len = *len - 1;
+    return ret;
 }
 
 char* concat(char *str1, char *str2) {

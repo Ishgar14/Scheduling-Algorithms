@@ -2,18 +2,17 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DEBUG
+// #define DEBUG
 #define SIZE 10
 
 typedef struct process {
-    int ID, arrival, burst, priority;
+    int ID, arrival, burst;
 } process;
 
 typedef struct {
     int ID[SIZE], 
         arrival[SIZE], 
         burst[SIZE],
-        priority[SIZE],
         finish[SIZE],
         turn_around[SIZE],
         wait[SIZE];
@@ -69,7 +68,6 @@ void schedule(process *pros, int len){
         stats.ID[pid] = p->ID;
         stats.arrival[pid] = p->arrival;
         stats.burst[pid] = p->burst;
-        stats.priority[pid] = p->priority;
         stats.finish[pid] = time;
         stats.turn_around[pid] = stats.finish[pid] - stats.arrival[pid];
         stats.wait[pid] = stats.turn_around[pid] - stats.burst[pid];
@@ -101,13 +99,12 @@ void schedule(process *pros, int len){
 
 void print_table(int len){
     printf("\n\n==== Data Chart ====");
-    printf("\nID  AT BT PR FT  TT  WT\n");
+    printf("\nID  AT BT FT  TT  WT\n");
     for (int i = 0; i < len; i++) {
-        printf("%-2d  %-2d %-2d %-2d %-3d %-3d %-3d\n",
+        printf("%-2d  %-2d %-2d %-3d %-3d %-3d\n",
             stats.ID[i], 
             stats.arrival[i], 
             stats.burst[i], 
-            stats.priority[i], 
             stats.finish[i], 
             stats.turn_around[i], 
             stats.wait[i]);
@@ -118,14 +115,14 @@ void print_table(int len){
 void main() {
     #ifdef DEBUG
     process pros[] = {
-        {1, 7, 9, 2},
-        {2, 0, 3, 3},
-        {3, 1, 7, 1},
-        {4, 5, 1, 4},
-        {5, 3, 3, 5},
+        {1, 7, 9},
+        {2, 0, 3},
+        {3, 1, 7},
+        {4, 5, 1},
+        {5, 3, 3},
 
-        // {1, 0, 2, 2},
-        // {2, 0, 3, 1},
+        // {1, 10, 2},
+        // {2, 15, 3},
     };
     int len = sizeof(pros) / sizeof(process);
 
@@ -141,13 +138,11 @@ void main() {
         scanf("%d", &pros[i].arrival);
         printf("Enter burst time of P%d: ", i + 1);
         scanf("%d", &pros[i].burst);
-        printf("Enter priority of P%d: ", i + 1);
-        scanf("%d", &pros[i].priority);
         printf("\n");
     }
     #endif
 
-    printf("========== Priority Scheduling [Non Preemptive] ==========\n");
+    printf("========== First Come First Serve ==========\n");
     schedule(pros, len);
     print_table(len);
 }
@@ -160,40 +155,27 @@ void pro_copy(process *p1, process *p2) {
     p1->arrival = p2->arrival;
     p1->burst = p2->burst;
     p1->ID = p2->ID;
-    p1->priority = p2->priority;
 }
 
 // This function returns the next available process 
 process* next(process* pros, int *len, int time) {
-    process temp = {0};
-    temp.priority = INT_MAX;
-    int index = -1;
-    process *ret = NULL;
-
     for (int i = 0; i < *len; i++) {
         if(pros[i].arrival > time)
             break;
+        
+        process* ret = malloc(sizeof(process));
+        pro_copy(ret, pros + i);
 
-        if(pros[i].priority < temp.priority){
-            pro_copy(&temp, pros + i);
-            index = i;
+        while(i < *len - 1){
+            pro_copy(pros + i, pros + i + 1);
+            i++;
         }
+
+        *len = *len - 1;
+        return ret;
     }
 
-    // No process could be found within given time
-    if(index == -1)
-        return NULL;
-    
-    ret = malloc(sizeof(process));
-    pro_copy(ret, pros + index);
-
-    while(index < *len - 1){
-        pro_copy(pros + index, pros + index + 1);
-        index++;
-    }
-
-    *len = *len - 1;
-    return ret;
+    return NULL;
 }
 
 char* concat(char *str1, char *str2) {

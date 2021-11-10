@@ -2,7 +2,7 @@
 #include <string.h>
 #include <stdlib.h>
 
-#define DEBUG
+// #define DEBUG
 #define SIZE 10
 #ifdef DEBUG
 #define QUANTA 1
@@ -22,32 +22,69 @@ typedef struct {
         turn_around[SIZE],
         wait[SIZE];
 } table;
+
 table stats = {0};
 
+// Ready queue to store process which HAVE arrived
+process ready[SIZE] = {0};
+int ready_len = 0;
+
+
+void prepare_ready(process*, int*, int);
 int cmp_arrival(const void*, const void*);
 char* concat(char*, char*);
-process* next(process[], int*, int);
 
-void schedule(process *pros, int len){
-    int time = 0, limit, previous_process = 0;
+void print_table(int len){
+    printf("\n\n==== Data Chart ====");
+    printf("\nID  AT BT FT  TT  WT\n");
+    for (int i = 0; i < len; i++) {
+        printf("%-2d  %-2d %-2d %-3d %-3d %-3d\n",
+            stats.ID[i], 
+            stats.arrival[i], 
+            stats.burst[i], 
+            stats.finish[i], 
+            stats.turn_around[i], 
+            stats.wait[i]);
+    }   
+}
+
+void schedule(process* pros, int len){
+    int time = 0, limit, previous_process = 0, i = 0;
     char *bar = '\0';
     char *timestamps = '\0';
     qsort(pros, len, sizeof(process), cmp_arrival);
     char temp[10];
+    process *p;
 
-    while(len > 0){
-        process *p = next(pros, &len, time);
+    while(1) {
+        prepare_ready(pros, &len, time);
+
+        if(i >= ready_len){
+            if(ready_len == 0)
+                i = 0;
+            else 
+                i %= ready_len;
+        }
+
+        p = (ready_len > 0) ? &ready[i] : NULL;
 
         if(p == NULL) {
             bar = concat(bar, "|");
             sprintf(temp, "%d", time);
             timestamps = concat(timestamps, temp);
 
-            while((p = next(pros, &len, time)) == NULL){
+            if(len == 0)
+                break;
+
+            while(ready_len == 0)
+            {
                 bar = concat(bar, "x");
                 timestamps = concat(timestamps, " ");
                 time += 1;
+                prepare_ready(pros, &len, time);
             }
+            
+            continue;
         }
 
         if (previous_process == p->ID){
@@ -88,11 +125,10 @@ void schedule(process *pros, int len){
         }
 
         previous_process = p->ID;
-        free(p);
+        i++;        
     }
     
     printf("Gantt Chart\n");
-    bar = concat(bar, "|");
 
     // decoration
     for (int i = 0; bar[i] != '\0'; i++) 
@@ -108,36 +144,20 @@ void schedule(process *pros, int len){
     printf("\n");
 
     // printing the time stamps of process
-    sprintf(temp, "%d", time);
-    timestamps = concat(timestamps, temp);
     printf("%s", timestamps);
-}
-
-void print_table(int len){
-    printf("\n\n==== Data Chart ====");
-    printf("\nID  AT BT FT  TT  WT\n");
-    for (int i = 0; i < len; i++) {
-        printf("%-2d  %-2d %-2d %-3d %-3d %-3d\n",
-            stats.ID[i], 
-            stats.arrival[i], 
-            stats.burst[i], 
-            stats.finish[i], 
-            stats.turn_around[i], 
-            stats.wait[i]);
-    }
-    
 }
 
 void main() {
     #ifdef DEBUG
     process pros[] = {
-        {1, 0, 7},
-        {2, 1, 5},
-        {3, 2, 3},
-        {4, 3, 1},
+        // {1, 0, 7},
+        // {2, 1, 5},
+        // {3, 2, 3},
+        // {4, 3, 1},
 
-        // {1, 10, 2},
-        // {2, 15, 3},
+        {1, 0, 3},
+        {2, 2, 2},
+        {3, 4, 1},
     };
     int len = sizeof(pros) / sizeof(process);
 
@@ -166,13 +186,14 @@ void main() {
         stats.burst[i] = pros[i].burst;
     }
 
-    printf("========== Shorted Job First [Preemptive] ==========\n");
+    printf("========== Round Robin ==========\n");
     schedule(pros, len);
     print_table(len);
 }
 
 int cmp_arrival(const void* p1, const void* p2){
-    return ((process*)p1)->arrival > ((process*)p2)->arrival;
+    return ((process*)p1)->arrival > ((process*)p2)->arrival || 
+            ((process*)p1)->ID > ((process*)p2)->ID;
 }
 
 void pro_copy(process *p1, process *p2) {
@@ -181,41 +202,35 @@ void pro_copy(process *p1, process *p2) {
     p1->ID = p2->ID;
 }
 
-// This function returns the next available process 
-process* next(process* pros, int *len, int time) {
-    process temp = {0};
-    temp.burst = INT_MAX;
-    int index = -1;
-    process *ret = NULL;
+void kill(process *arr, int *len, int index_to_kill){
+    int i;
+    for (i = index_to_kill; i < *len - 1; i++)
+        pro_copy(arr + i, arr + i + 1);
+    if(i == *len - 1){
+        process empty = {0, 0, 0};
+        pro_copy(arr + i, &empty);
+    }
+    *len = *len - 1;
+}
 
-    for (int i = 0; i < *len; i++) {
-        if(pros[i].arrival > time)
+void prepare_ready(process *pros, int *len, int time){
+    // Iterate over processes to check if given process has arrived
+    while(1)
+    {
+        if(*len == 0 || pros[0].arrival > time)
             break;
 
-        if(pros[i].burst < temp.burst){
-            pro_copy(&temp, pros + i);
-            index = i;
-        }
+        pro_copy(ready + ready_len, pros);
+        kill(pros, len, 0);
+        ready_len++;
     }
-
-    // No process could be found within given time
-    if(index == -1)
-        return NULL;
     
-    ret = malloc(sizeof(process));
-    pro_copy(ret, pros + index);
-    pros[index].burst -= QUANTA;
-
-    if (ret->burst == 0 || ret->burst <= QUANTA) {
-        while(index < *len - 1){
-            pro_copy(pros + index, pros + index + 1);
-            index++;
-        }
-
-        *len = *len - 1;
-    }
-    return ret;
+    // Iterate over ready queue to filter executed processes
+    for (int i = 0; i < ready_len; i++)
+        if(ready[i].burst <= 0)
+            kill(ready, &ready_len, i);
 }
+
 
 char* concat(char *str1, char *str2) {
     int len = 0;
