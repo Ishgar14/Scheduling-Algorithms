@@ -31,7 +31,6 @@ void show_history(frame *history, int len, int PAGE_FRAMES){
 void frame_copy(frame *dst, frame *src, int PAGE_FRAMES){
     for (int i = 0; i < PAGE_FRAMES; i++)
         dst->frame[i] = src->frame[i];
-    dst->status = src->status;
 }
 
 char hit_or_miss(frame *f, int PAGE_FRAME, char page){
@@ -42,19 +41,45 @@ char hit_or_miss(frame *f, int PAGE_FRAME, char page){
     return 'P';
 }
 
+// returns age of `page` 
+int age(char *seq, int len, char page){
+    for (int i = len - 1; i > 0; i--)
+        if(seq[i] == page + '0')
+            return len - i;
+    
+    return 1 << 31 - 1;
+}
 void schedule(char* sequence, int PAGE_FRAMES, frame *history){
-    int counter = 0;
+    int counter = 0; 
 
-    for(int i = 0; sequence[i]; i++) {
-        counter %= PAGE_FRAMES;
+    for (int i = 0; sequence[i] && i < PAGE_FRAMES; i++) {
+        if(i > 0)
+            frame_copy(&history[i], &history[i - 1], PAGE_FRAMES);
+
+        history[i].status = 'P';
+        history[i].frame[counter] = sequence[i] - '0';
+        counter++;
+    }
+
+    for(int i = PAGE_FRAMES; sequence[i]; i++) {
+        int boomer = 0, *target = 0;
 
         if(i > 0)
             frame_copy(&history[i], &history[i - 1], PAGE_FRAMES);
 
         history[i].status = hit_or_miss(&history[i], PAGE_FRAMES, sequence[i]);
-        history[i].frame[counter] = sequence[i] - '0';
 
-        counter++;
+        if(history[i].status == 'P'){
+            for (int j = 0; j < PAGE_FRAMES; j++) {
+                int _age = age(sequence, i, history[i].frame[j]);
+                if(_age > boomer){
+                    boomer = _age;
+                    target = &history[i].frame[j];
+                }
+            }
+            if(target)
+                *target = sequence[i] - '0';
+        }
     }
 }
 
