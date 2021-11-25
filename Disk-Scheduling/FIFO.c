@@ -23,7 +23,7 @@ void main() {
     int track, n;
     printf("Enter current track: ");
     scanf("%d", &track);
-    printf("Enter number of x: ");
+    printf("Enter number of locations: ");
     scanf("%d", &n);
     // int *numbers = calloc(n, sizeof(int));
     int numbers[10];
