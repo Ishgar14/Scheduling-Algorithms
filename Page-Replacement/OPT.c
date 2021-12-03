@@ -120,7 +120,7 @@ void main() {
     
     schedule(sequence_string, PAGE_FRAMES, history);
 
-    printf("Sequence\n", sequence_string);
+    printf("Sequence\n");
     for (int i = 0; sequence_string[i]; i++)
         printf("%3c", sequence_string[i]);
     printf("\n\n");

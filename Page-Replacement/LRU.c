@@ -84,7 +84,7 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
                 history[i].status = 'P';
                 continue;
             }
-            
+
             for (int j = 0; j < PAGE_FRAMES; j++) {
                 int _age = age(sequence, i, history[i].frame[j]);
                 if(_age > boomer){
@@ -119,7 +119,7 @@ void main() {
     
     schedule(sequence_string, PAGE_FRAMES, history);
 
-    printf("Sequence\n", sequence_string);
+    printf("Sequence\n");
     for (int i = 0; sequence_string[i]; i++)
         printf("%3c", sequence_string[i]);
     printf("\n\n");
