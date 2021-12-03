@@ -41,6 +41,13 @@ char hit_or_miss(frame *f, int PAGE_FRAME, char page){
     return 'P';
 }
 
+// This function returns the next empty slot available
+int* empty_slot(frame *f, int PAGE_FRAME){
+    for (int i = 0; i < PAGE_FRAME; i++)
+        if(f->frame[i] == EMPTY) return &f->frame[i];
+    return NULL;
+}
+
 // returns after how much time the `page` will appear in sequence
 int rebirth(char *seq, char page){
     for (int i = 0; seq[i]; i++)
@@ -57,7 +64,8 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
         if(i > 0)
             frame_copy(&history[i], &history[i - 1], PAGE_FRAMES);
 
-        history[i].status = 'P';
+        history[i].status = hit_or_miss(&history[i], PAGE_FRAMES, sequence[i]);
+        if(history[i].status == 'H') continue;
         history[i].frame[counter] = sequence[i] - '0';
         counter++;
     }
@@ -72,6 +80,12 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
         history[i].status = hit_or_miss(&history[i], PAGE_FRAMES, sequence[i]);
         
         if(history[i].status == 'P') {
+            if (target = empty_slot(&history[i], PAGE_FRAMES)){
+                *target = sequence[i] - '0';
+                history[i].status = 'P';
+                continue;
+            }
+
             for (int j = 0; j < PAGE_FRAMES; j++) {
                 int birth = rebirth(sequence + i, history[i].frame[j] + '0');
                 if(birth > gestation_period){
@@ -87,7 +101,7 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
 }
 
 void main() {
-    char sequence_string[SIZE] = "012301401234";
+    char sequence_string[SIZE] = "1252534120";
     int PAGE_FRAMES = 4;
 
     // printf("Enter number of page frames: ");

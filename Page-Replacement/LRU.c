@@ -41,6 +41,13 @@ char hit_or_miss(frame *f, int PAGE_FRAME, char page){
     return 'P';
 }
 
+// This function returns the next empty slot available
+int* empty_slot(frame *f, int PAGE_FRAME){
+    for (int i = 0; i < PAGE_FRAME; i++)
+        if(f->frame[i] == EMPTY) return &f->frame[i];
+    return NULL;
+}
+
 // returns age of `page` 
 int age(char *seq, int len, char page){
     for (int i = len - 1; i > 0; i--)
@@ -49,6 +56,7 @@ int age(char *seq, int len, char page){
     
     return 1 << 31 - 1;
 }
+
 void schedule(char* sequence, int PAGE_FRAMES, frame *history){
     int counter = 0; 
 
@@ -56,7 +64,8 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
         if(i > 0)
             frame_copy(&history[i], &history[i - 1], PAGE_FRAMES);
 
-        history[i].status = 'P';
+        history[i].status = hit_or_miss(&history[i], PAGE_FRAMES, sequence[i]);
+        if(history[i].status == 'H') continue;
         history[i].frame[counter] = sequence[i] - '0';
         counter++;
     }
@@ -70,6 +79,12 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
         history[i].status = hit_or_miss(&history[i], PAGE_FRAMES, sequence[i]);
 
         if(history[i].status == 'P'){
+            if (target = empty_slot(&history[i], PAGE_FRAMES)){
+                *target = sequence[i] - '0';
+                history[i].status = 'P';
+                continue;
+            }
+            
             for (int j = 0; j < PAGE_FRAMES; j++) {
                 int _age = age(sequence, i, history[i].frame[j]);
                 if(_age > boomer){
@@ -84,8 +99,9 @@ void schedule(char* sequence, int PAGE_FRAMES, frame *history){
 }
 
 void main() {
-    char sequence_string[SIZE] = "012301401234";
-    int PAGE_FRAMES = 3;
+    // char sequence_string[SIZE] = "012301401234";
+    char sequence_string[SIZE] = "1252534120";
+    int PAGE_FRAMES = 4;
 
     // printf("Enter number of page frames: ");
     // scanf("%d", &PAGE_FRAMES);
